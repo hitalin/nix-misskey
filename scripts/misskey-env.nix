@@ -132,6 +132,13 @@ pkgs.writeShellScriptBin "nix-misskey" ''
   setup_test_env() {
     log "Setting up test environment..."
 
+    # Stop any existing services first
+    stop
+
+    # Setup fresh PostgreSQL instance for tests
+    setup_postgres
+    setup_redis
+
     # Setup test database
     createdb -h localhost -p 5433 -U postgres misskey-test || error "Failed to create test database"
 
@@ -145,22 +152,49 @@ pkgs.writeShellScriptBin "nix-misskey" ''
   run_unit_tests() {
     setup_test_env
     log "Running unit tests..."
-    pnpm --filter backend test
+    NODE_ENV=test pnpm --filter backend build
+    NODE_ENV=test pnpm --filter backend test -- --detectOpenHandles --forceExit
   }
 
   run_e2e_tests() {
     setup_test_env
     log "Running E2E tests..."
-    pnpm --filter backend test:e2e
+    NODE_ENV=test pnpm --filter backend build
+    NODE_ENV=test pnpm --filter backend build:test
+    NODE_ENV=test pnpm --filter backend jest:e2e -- \
+      --detectOpenHandles \
+      --forceExit \
+      --maxWorkers=1
   }
 
   run_all_tests() {
     setup_test_env
     log "Running all tests..."
-    pnpm --filter frontend test
-    pnpm --filter misskey-js test
-    pnpm --filter backend test
-    pnpm --filter backend test:e2e
+
+    # Run frontend tests
+    NODE_ENV=test pnpm --filter frontend test || error "Frontend tests failed"
+
+    # Run misskey-js tests
+    NODE_ENV=test pnpm --filter misskey-js test || error "Misskey-js tests failed"
+
+    # Run backend tests
+    NODE_ENV=test pnpm --filter backend build
+    NODE_ENV=test pnpm --filter backend test -- --detectOpenHandles --forceExit || error "Backend unit tests failed"
+
+    # Run E2E tests
+    NODE_ENV=test pnpm --filter backend build:test
+    NODE_ENV=test pnpm --filter backend jest:e2e -- \
+      --detectOpenHandles \
+      --forceExit \
+      --maxWorkers=1 || error "E2E tests failed"
+  }
+
+  cleanup_test_env() {
+    log "Cleaning up test environment..."
+    stop
+    dropdb -h localhost -p 5433 -U postgres misskey-test || true
+    rm -f .config/test.yml
+    success "Test environment cleaned up"
   }
 
   # Main command handler
@@ -185,9 +219,9 @@ pkgs.writeShellScriptBin "nix-misskey" ''
         *) tail -f data/logs/* ;;
       esac
       ;;
-    test) run_all_tests ;;
-    test:unit) run_unit_tests ;;
-    test:e2e) run_e2e_tests ;;
+    test) run_all_tests; cleanup_test_env ;;
+    test:unit) run_unit_tests; cleanup_test_env ;;
+    test:e2e) run_e2e_tests; cleanup_test_env ;;
     *) show_help ;;
   esac
 ''
