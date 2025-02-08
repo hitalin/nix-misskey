@@ -25,6 +25,9 @@
       echo "  psql    - Connect to database"
       echo "  status  - Check services status"
       echo "  logs    - View logs (postgres|all)"
+      echo "  test    - Run tests"
+      echo "  test:e2e - Run E2E tests"
+      echo "  test:unit - Run unit tests"
       exit 1
     }
   '';

@@ -129,6 +129,40 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     success "Environment cleaned"
   }
 
+  setup_test_env() {
+    log "Setting up test environment..."
+
+    # Setup test database
+    createdb -h localhost -p 5433 -U postgres misskey-test || error "Failed to create test database"
+
+    # Copy test config
+    mkdir -p .config
+    cp ${configs.misskey.test} .config/test.yml
+
+    success "Test environment setup completed"
+  }
+
+  run_unit_tests() {
+    setup_test_env
+    log "Running unit tests..."
+    pnpm --filter backend test
+  }
+
+  run_e2e_tests() {
+    setup_test_env
+    log "Running E2E tests..."
+    pnpm --filter backend test:e2e
+  }
+
+  run_all_tests() {
+    setup_test_env
+    log "Running all tests..."
+    pnpm --filter frontend test
+    pnpm --filter misskey-js test
+    pnpm --filter backend test
+    pnpm --filter backend test:e2e
+  }
+
   # Main command handler
   if [ $# -eq 0 ]; then
     show_help
@@ -151,6 +185,9 @@ pkgs.writeShellScriptBin "nix-misskey" ''
         *) tail -f data/logs/* ;;
       esac
       ;;
+    test) run_all_tests ;;
+    test:unit) run_unit_tests ;;
+    test:e2e) run_e2e_tests ;;
     *) show_help ;;
   esac
 ''
