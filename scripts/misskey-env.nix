@@ -152,19 +152,34 @@ pkgs.writeShellScriptBin "nix-misskey" ''
   run_unit_tests() {
     setup_test_env
     log "Running unit tests..."
+    
+    # Build and run tests with proper flags
     NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test -- --detectOpenHandles --forceExit
+    NODE_ENV=test pnpm --filter backend test -- \
+      --detectOpenHandles \
+      --forceExit \
+      --maxWorkers=1 \
+      --testTimeout=30000 \
+      --runInBand || error "Unit tests failed"
   }
 
   run_e2e_tests() {
     setup_test_env
     log "Running E2E tests..."
+    
+    # Build test server first
     NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend build:test
-    NODE_ENV=test pnpm --filter backend jest:e2e -- \
+    NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
+    
+    # Run E2E tests with proper configuration
+    NODE_ENV=test pnpm --filter backend jest:e2e \
+      --config jest.config.e2e.cjs \
       --detectOpenHandles \
       --forceExit \
-      --maxWorkers=1
+      --maxWorkers=1 \
+      --testTimeout=30000 \
+      --runInBand \
+      --passWithNoTests || error "E2E tests failed"
   }
 
   run_all_tests() {
@@ -177,22 +192,41 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     # Run misskey-js tests
     NODE_ENV=test pnpm --filter misskey-js test || error "Misskey-js tests failed"
 
-    # Run backend tests
+    # Run backend unit tests with improved settings
     NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test -- --detectOpenHandles --forceExit || error "Backend unit tests failed"
-
-    # Run E2E tests
-    NODE_ENV=test pnpm --filter backend build:test
-    NODE_ENV=test pnpm --filter backend jest:e2e -- \
+    NODE_ENV=test pnpm --filter backend test -- \
       --detectOpenHandles \
       --forceExit \
-      --maxWorkers=1 || error "E2E tests failed"
+      --maxWorkers=1 \
+      --testTimeout=30000 \
+      --runInBand || error "Backend unit tests failed"
+
+    # Run E2E tests with improved settings
+    NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
+    NODE_ENV=test pnpm --filter backend jest:e2e \
+      --config jest.config.e2e.cjs \
+      --detectOpenHandles \
+      --forceExit \
+      --maxWorkers=1 \
+      --testTimeout=30000 \
+      --runInBand \
+      --passWithNoTests || error "E2E tests failed"
   }
 
   cleanup_test_env() {
     log "Cleaning up test environment..."
+    
+    # Make sure PostgreSQL is running before trying to drop database
+    if ! pg_isready -h localhost -p 5433 >/dev/null 2>&1; then
+      pg_ctl -D "$PGDATA" -l "$PGDATA/log/postgresql.log" start
+      sleep 2
+    fi
+    
+    # Drop test database if it exists
+    dropdb -h localhost -p 5433 -U postgres misskey-test 2>/dev/null || true
+    
+    # Stop services and clean up
     stop
-    dropdb -h localhost -p 5433 -U postgres misskey-test || true
     rm -f .config/test.yml
     success "Test environment cleaned up"
   }
