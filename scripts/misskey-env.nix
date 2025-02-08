@@ -172,12 +172,12 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     
     # Run E2E tests with proper configuration
     NODE_ENV=test pnpm --filter backend jest:e2e \
-      --config jest.config.e2e.cjs \
       --detectOpenHandles \
       --forceExit \
       --runInBand \
       --testTimeout=30000 \
-      --passWithNoTests || error "E2E tests failed"
+      --passWithNoTests \
+      --config=jest.config.e2e.cjs || error "E2E tests failed"
   }
 
   run_all_tests() {
@@ -201,12 +201,12 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     # Run E2E tests
     NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
     NODE_ENV=test pnpm --filter backend jest:e2e \
-      --config jest.config.e2e.cjs \
       --detectOpenHandles \
       --forceExit \
       --runInBand \
       --testTimeout=30000 \
-      --passWithNoTests || error "E2E tests failed"
+      --passWithNoTests \
+      --config=jest.config.e2e.cjs || error "E2E tests failed"
   }
 
   cleanup_test_env() {
