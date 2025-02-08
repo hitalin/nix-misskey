@@ -81,7 +81,7 @@ pkgs.writeShellScriptBin "nix-misskey" ''
   setup_config() {
     log "Creating Misskey configuration..."
     mkdir -p .config
-    cp ${configs.misskey} .config/default.yml
+    cp ${configs.misskey.default} .config/default.yml
     success "Configuration created"
   }
 
