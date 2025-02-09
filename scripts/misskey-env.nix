@@ -155,10 +155,24 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     
     # Build and run tests with proper flags
     pnpm --filter backend build
+    
+    # Run tests without failing immediately
+    local test_result=0
     pnpm --filter backend exec cross-env NODE_ENV=test jest \
       --detectOpenHandles \
       --runInBand \
-      --testTimeout=30000 || error "Unit tests failed"
+      --testTimeout=30000 \
+      --bail=0 \
+      --verbose \
+      --no-cache || test_result=$?
+    
+    # レポート出力
+    if [ $test_result -ne 0 ]; then
+      log "Tests completed with failures (exit code: $test_result)"
+    else
+      success "All tests passed"
+    fi
+    return $test_result
   }
 
   run_e2e_tests() {
