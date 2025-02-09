@@ -184,7 +184,7 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     pnpm --filter backend exec cross-env NODE_ENV=test pnpm build:test || error "Failed to build test server"
     
     # Run E2E tests with proper configuration
-    pnpm --filter backend exec cross-env NODE_ENV=test jest:e2e \
+    pnpm --filter backend exec cross-env NODE_ENV=test pnpm test:e2e \
       --detectOpenHandles \
       --runInBand \
       --testTimeout=30000 || error "E2E tests failed"
