@@ -155,7 +155,8 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     
     # Build and run tests with proper flags
     NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test || error "Unit tests failed"
+    NODE_ENV=test pnpm --filter backend test -- \
+      --detectOpenHandles || error "Unit tests failed"
   }
 
   run_e2e_tests() {
@@ -182,7 +183,8 @@ pkgs.writeShellScriptBin "nix-misskey" ''
 
     # Run backend unit tests
     NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test || error "Backend unit tests failed"
+    NODE_ENV=test pnpm --filter backend test -- \
+      --detectOpenHandles || error "Backend unit tests failed"
 
     # Run E2E tests
     NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
