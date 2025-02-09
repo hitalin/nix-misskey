@@ -154,9 +154,11 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     log "Running unit tests..."
     
     # Build and run tests with proper flags
-    NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test -- \
-      --detectOpenHandles || error "Unit tests failed"
+    pnpm --filter backend build
+    pnpm --filter backend exec cross-env NODE_ENV=test jest \
+      --detectOpenHandles \
+      --runInBand \
+      --testTimeout=30000 || error "Unit tests failed"
   }
 
   run_e2e_tests() {
@@ -164,11 +166,14 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     log "Running E2E tests..."
     
     # Build test server first
-    NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
+    pnpm --filter backend build
+    pnpm --filter backend exec cross-env NODE_ENV=test pnpm build:test || error "Failed to build test server"
     
     # Run E2E tests with proper configuration
-    NODE_ENV=test pnpm --filter backend jest:e2e  || error "E2E tests failed"
+    pnpm --filter backend exec cross-env NODE_ENV=test jest:e2e \
+      --detectOpenHandles \
+      --runInBand \
+      --testTimeout=30000 || error "E2E tests failed"
   }
 
   run_all_tests() {
@@ -176,19 +181,24 @@ pkgs.writeShellScriptBin "nix-misskey" ''
     log "Running all tests..."
 
     # Run frontend tests
-    NODE_ENV=test pnpm --filter frontend test || error "Frontend tests failed"
+    pnpm --filter frontend exec cross-env NODE_ENV=test jest || error "Frontend tests failed"
 
     # Run misskey-js tests
-    NODE_ENV=test pnpm --filter misskey-js test || error "Misskey-js tests failed"
+    pnpm --filter misskey-js exec cross-env NODE_ENV=test jest || error "Misskey-js tests failed"
 
     # Run backend unit tests
-    NODE_ENV=test pnpm --filter backend build
-    NODE_ENV=test pnpm --filter backend test -- \
-      --detectOpenHandles || error "Backend unit tests failed"
+    pnpm --filter backend build
+    pnpm --filter backend exec cross-env NODE_ENV=test jest \
+      --detectOpenHandles \
+      --runInBand \
+      --testTimeout=30000 || error "Backend unit tests failed"
 
     # Run E2E tests
-    NODE_ENV=test pnpm --filter backend build:test || error "Failed to build test server"
-    NODE_ENV=test pnpm --filter backend jest:e2e || error "E2E tests failed"
+    pnpm --filter backend exec cross-env NODE_ENV=test pnpm build:test || error "Failed to build test server"
+    pnpm --filter backend exec cross-env NODE_ENV=test jest:e2e \
+      --detectOpenHandles \
+      --runInBand \
+      --testTimeout=30000 || error "E2E tests failed"
   }
 
   cleanup_test_env() {
