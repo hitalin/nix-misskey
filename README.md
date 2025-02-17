@@ -16,6 +16,7 @@ echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 ```bash
 git clone --recursive https://github.com/yamisskey/nayamisskey.git misskey
 cd misskey
+git clone https://github.com/hitalin/nix-misskey .nix-misskey
 nix develop ./.nix-misskey#default
 nix-misskey setup
 nix-misskey start
