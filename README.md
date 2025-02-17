@@ -1,6 +1,6 @@
 # nix-misskey
 
-This project uses Nix for development environment management.
+This project uses Nix for development environment management of Misskey.
 
 1. Install Nix: https://nixos.org/download.html
 
