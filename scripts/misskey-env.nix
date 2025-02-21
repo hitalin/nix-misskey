@@ -80,8 +80,12 @@ pkgs.writeShellScriptBin "nix-misskey" ''
 
   setup_config() {
     log "Creating Misskey configuration..."
-    mkdir -p .config
-    cp ${configs.misskey.default} .config/default.yml
+    mkdir -p .config || error "Failed to create .config directory"
+    chmod 755 .config || error "Failed to set .config directory permissions"
+    chown $USER:$USER .config || error "Failed to set .config directory ownership"
+    cp ${configs.misskey.default} .config/default.yml || error "Failed to copy default.yml"
+    chmod 644 .config/default.yml || error "Failed to set default.yml permissions"
+    chown $USER:$USER .config/default.yml || error "Failed to set default.yml ownership"
     success "Configuration created"
   }
 
