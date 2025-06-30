@@ -16,7 +16,7 @@ echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 4. Setup development environment:
 
 ```bash
-git clone --recursive https://github.com/yamisskey/yamisskey.git misskey
+git clone --recursive https://github.com/yamisskey-dev/yamisskey.git misskey
 cd misskey
 git clone https://github.com/hitalin/nix-misskey .nix-misskey
 ```
