@@ -22,16 +22,8 @@ git clone https://github.com/hitalin/nix-misskey .nix-misskey
 ```
 
 ```bash
-echo "use flake" >> .envrc
-```
-
-in bash
-```bash
-nix develop ./.nix-misskey#default
-```
-in zsh
-```bash
-nix develop ./.nix-misskey"#default"
+echo "use flake ./.nix-misskey#default" > .envrc
+direnv allow
 ```
 
 5. Start development
