@@ -4,7 +4,7 @@ pkgs.mkShell {
   name = "misskey-dev-shell";
 
   packages = with pkgs; [
-    nodejs_20
+    nodejs_22
     pnpm
     postgresql_15
     redis
