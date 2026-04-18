@@ -48,52 +48,76 @@ nix develop ./.nix-misskey
 初回のみ依存関係をインストールしてビルド:
 
 ```bash
-nix-misskey app setup
+nix-misskey setup
 ```
 
 開発サーバーを起動。PostgreSQL / Redis / 設定ファイルが未初期化なら
 自動的に立ち上げます。
 
 ```bash
-nix-misskey app dev
+nix-misskey dev
 ```
 
-2 回目以降は `nix develop` 後に `nix-misskey app dev` の 1 コマンドで
+2 回目以降は `nix develop` 後に `nix-misskey dev` の 1 コマンドで
 完結します。
 
 ## コマンド一覧
 
-トップレベル:
+Misskey 本家の `package.json#scripts` 命名に揃えています
+（フラット階層、修飾はコロン区切り）。
+
+**App / lifecycle**
 
 | コマンド | 説明 |
 |---|---|
-| `status` | 各サービスの稼働状況を表示 |
-| `stop` | PostgreSQL と Redis を停止 |
-| `reset` | `clean` してから `app setup`（破壊的に再構築） |
-| `clean` | data / node_modules / 設定を削除 |
+| `dev` | サービスを ensure して `pnpm dev` |
+| `setup` | 依存インストール + build + migrate（初回） |
+| `build` | `pnpm build`（production） |
+| `migrate` | `pnpm migrate` |
+| `revert` | `pnpm revert`（直前のマイグレーションを巻き戻し） |
+
+**Services**
+
+| コマンド | 説明 |
+|---|---|
+| `status` | PostgreSQL / Redis の稼働状況 |
+| `stop` | 両サービスを停止 |
 | `logs <db\|cache\|app\|all>` | ログを tail |
-| `help` | ヘルプを表示 |
 
-名前空間付き:
+**Cleanup**
 
 | コマンド | 説明 |
 |---|---|
-| `app setup` | 依存関係をインストールしてビルド + マイグレーション（初回） |
-| `app dev` | サービスを ensure して dev サーバーを起動 |
-| `app build` | `pnpm build`（production）を単独実行 |
-| `app migrate` | `pnpm migrate` を単独実行 |
-| `db init` | PostgreSQL を破壊的に再初期化 |
-| `db start` / `db stop` | PostgreSQL の起動・停止 |
-| `db psql` | misskey DB に psql で接続 |
-| `cache init` | Redis を破壊的に再初期化 |
-| `cache start` / `cache stop` | Redis の起動・停止 |
-| `cache cli` | redis-cli を起動 |
-| `test unit` | バックエンドのユニットテストのみ |
-| `test e2e` | バックエンドの E2E テストのみ |
-| `test all` | 全テストを実行 |
+| `clean` | data / `.config` を削除 |
+| `clean-all` | `clean` + `node_modules` + `built` |
+| `reset` | `clean-all` + `setup` |
 
-各サブコマンドは `nix-misskey-app-dev` 等の独立した bin としても
-PATH 上にあり、直接呼び出せます。
+**Database (`db:*`)**
+
+| コマンド | 説明 |
+|---|---|
+| `db:init` | PostgreSQL を破壊的に再初期化 |
+| `db:start` / `db:stop` | 起動・停止（idempotent） |
+| `db:psql` | misskey DB に psql で接続 |
+
+**Cache (`cache:*`)**
+
+| コマンド | 説明 |
+|---|---|
+| `cache:init` | Redis を破壊的に再初期化 |
+| `cache:start` / `cache:stop` | 起動・停止（idempotent） |
+| `cache:cli` | redis-cli を起動 |
+
+**Test**
+
+| コマンド | 説明 |
+|---|---|
+| `test` | 全テスト |
+| `test:unit` | バックエンドのユニットテスト |
+| `test:e2e` | バックエンドの E2E テスト |
+
+各サブコマンドは `nix-misskey-dev` / `nix-misskey-db-psql` のような
+独立した bin として PATH 上にあり、直接呼び出すこともできます。
 
 ## ポート
 

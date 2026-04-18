@@ -75,11 +75,25 @@ let
     };
 
   # name -> source file
+  # Naming follows Misskey upstream: flat top-level commands, colon-prefixed
+  # for namespaced subcommands. Internal bin filenames use a hyphen because
+  # ":" is awkward in shell completion / grep patterns; the dispatcher maps
+  # "ns:sub" -> "nix-misskey-ns-sub".
   binSpecs = {
-    "nix-misskey-app-setup" = ./bin/app-setup.sh;
-    "nix-misskey-app-dev" = ./bin/app-dev.sh;
-    "nix-misskey-app-build" = ./bin/app-build.sh;
-    "nix-misskey-app-migrate" = ./bin/app-migrate.sh;
+    "nix-misskey-dev" = ./bin/dev.sh;
+    "nix-misskey-setup" = ./bin/setup.sh;
+    "nix-misskey-build" = ./bin/build.sh;
+    "nix-misskey-migrate" = ./bin/migrate.sh;
+    "nix-misskey-revert" = ./bin/revert.sh;
+    "nix-misskey-status" = ./bin/status.sh;
+    "nix-misskey-stop" = ./bin/stop.sh;
+    "nix-misskey-clean" = ./bin/clean.sh;
+    "nix-misskey-clean-all" = ./bin/clean-all.sh;
+    "nix-misskey-reset" = ./bin/reset.sh;
+    "nix-misskey-logs" = ./bin/logs.sh;
+    "nix-misskey-test" = ./bin/test.sh;
+    "nix-misskey-test-unit" = ./bin/test-unit.sh;
+    "nix-misskey-test-e2e" = ./bin/test-e2e.sh;
     "nix-misskey-db-init" = ./bin/db-init.sh;
     "nix-misskey-db-start" = ./bin/db-start.sh;
     "nix-misskey-db-stop" = ./bin/db-stop.sh;
@@ -88,14 +102,6 @@ let
     "nix-misskey-cache-start" = ./bin/cache-start.sh;
     "nix-misskey-cache-stop" = ./bin/cache-stop.sh;
     "nix-misskey-cache-cli" = ./bin/cache-cli.sh;
-    "nix-misskey-status" = ./bin/status.sh;
-    "nix-misskey-stop" = ./bin/stop.sh;
-    "nix-misskey-clean" = ./bin/clean.sh;
-    "nix-misskey-reset" = ./bin/reset.sh;
-    "nix-misskey-logs" = ./bin/logs.sh;
-    "nix-misskey-test-unit" = ./bin/test-unit.sh;
-    "nix-misskey-test-e2e" = ./bin/test-e2e.sh;
-    "nix-misskey-test-all" = ./bin/test-all.sh;
   };
 
   individualCommands = lib.mapAttrsToList mkCmd binSpecs;
@@ -108,52 +114,68 @@ let
         cat <<EOF
       Misskey Development Environment
 
-      Usage: nix-misskey <namespace> <command> [args]
-             nix-misskey <command>
+      Usage: nix-misskey <command> [args]
 
-      Top-level commands:
-        status                       Show service status
-        stop                         Stop PostgreSQL and Redis
-        reset                        Destructive: clean + app setup
-        clean                        Remove data, node_modules and config
-        help                         Show this help
+      App / lifecycle:
+        dev              Ensure services + run pnpm dev
+        setup            Install deps, build, migrate (initial)
+        build            pnpm build
+        migrate          pnpm migrate
+        revert           pnpm revert (rollback last DB migration)
 
-      Namespaced commands:
-        app   setup | dev | build | migrate
-        db    init  | start | stop | psql
-        cache init  | start | stop | cli
-        test  unit  | e2e   | all
+      Services:
+        status           Show PostgreSQL / Redis status
+        stop             Stop PostgreSQL and Redis
+        logs <db|cache|app|all>
 
-      Logs:
-        logs  db | cache | app | all
+      Cleanup:
+        clean            Remove data and config (PG / Redis / .config)
+        clean-all        clean + node_modules + built
+        reset            clean-all + setup
+
+      Database (db:*):
+        db:init          Destructively re-initialize PostgreSQL
+        db:start         Start PostgreSQL (idempotent)
+        db:stop          Stop PostgreSQL
+        db:psql          Open psql session
+
+      Cache (cache:*):
+        cache:init       Destructively re-initialize Redis
+        cache:start      Start Redis (idempotent)
+        cache:stop       Stop Redis
+        cache:cli        Open redis-cli session
+
+      Test:
+        test             Run all tests
+        test:unit        Backend unit tests
+        test:e2e         Backend E2E tests
+
+      help               Show this help
       EOF
       }
 
-      ns="''${1:-help}"
+      cmd="''${1:-help}"
+      shift || true
 
-      case "$ns" in
-        app|db|cache|test)
-          shift
-          sub="''${1:-}"
-          if [ -z "$sub" ]; then
-            show_help
-            exit 1
-          fi
-          shift
-          exec "nix-misskey-$ns-$sub" "$@"
-          ;;
-        logs|status|stop|reset|clean)
-          shift
-          exec "nix-misskey-$ns" "$@"
-          ;;
+      case "$cmd" in
         help|-h|--help|"")
           show_help
+          exit 0
+          ;;
+        *:*)
+          target="nix-misskey-''${cmd%%:*}-''${cmd#*:}"
           ;;
         *)
-          show_help
-          exit 1
+          target="nix-misskey-$cmd"
           ;;
       esac
+
+      if ! command -v "$target" >/dev/null 2>&1; then
+        echo "Unknown command: $cmd" >&2
+        show_help
+        exit 1
+      fi
+      exec "$target" "$@"
     '';
   };
 

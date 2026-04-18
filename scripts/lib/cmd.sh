@@ -5,7 +5,12 @@
 do_clean() {
   pg_stop
   redis_stop
-  rm -rf data node_modules .config/default.yml .config/test.yml
+  rm -rf data .config/default.yml .config/test.yml
+}
+
+do_clean_all() {
+  do_clean
+  rm -rf node_modules built
 }
 
 do_setup() {
