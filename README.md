@@ -102,29 +102,3 @@ nix fmt                            # .nix ファイルを整形
 nix flake check                    # flake 出力を検証
 ```
 
-## ディレクトリ構成
-
-```
-.
-├── flake.nix              # flake 入力 / 出力定義
-├── shell.nix              # devShell 定義
-├── envrc.sample           # direnv 用 .envrc ひな形
-├── configs/
-│   ├── default.nix
-│   ├── misskey/
-│   │   ├── default.nix    # dev.yml / test.yml を export
-│   │   ├── dev.yml        # 開発用 Misskey 設定
-│   │   └── test.yml       # テスト用 Misskey 設定
-│   ├── postgres.nix       # postgresql.conf と pg_hba.conf
-│   └── redis.nix          # redis.conf
-└── scripts/
-    ├── default.nix
-    ├── misskey-env.nix    # CLI を組み立てる Nix ラッパー
-    ├── nix-misskey.sh     # ディスパッチ + top-level cmd_*
-    └── lib/               # 機能別モジュール
-        ├── common.sh      # ログ・ヘルプ・前提チェック
-        ├── postgres.sh    # ensure_postgres / init_postgres など
-        ├── redis.sh       # ensure_redis / init_redis など
-        ├── config.sh      # ensure_config
-        └── tests.sh       # setup_test_env / cmd_test_*
-```
