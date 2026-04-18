@@ -24,13 +24,29 @@ pkgs.mkShell {
   ]);
 
   shellHook = ''
-    echo "🚀 Welcome to Misskey development environment"
-    echo
-    echo "Type 'nix-misskey help' to see available commands"
-    echo
-    if [ ! -f .config/default.yml ]; then
-      echo "🔧 First time? Run 'nix-misskey setup' to initialize the environment"
+    if [ -z "$NO_COLOR" ]; then
+      _G=$'\033[38;2;134;179;0m'   # Misskey theme color #86b300
+      _D=$'\033[90m'
+      _B=$'\033[1m'
+      _R=$'\033[0m'
+    else
+      _G=""; _D=""; _B=""; _R=""
     fi
+
+    printf '\n'
+    printf '%s  _____ _         _           %s\n'  "$_G" "$_R"
+    printf '%s |     |_|___ ___| |_ ___ _ _ %s\n'  "$_G" "$_R"
+    printf "%s | | | | |_ -|_ -| '_| -_| | |%s\n"  "$_G" "$_R"
+    printf '%s |_|_|_|_|___|___|_,_|___|_  |%s\n'  "$_G" "$_R"
+    printf '%s                         |___|%s %snix-dev%s\n' "$_G" "$_R" "$_D" "$_R"
+    printf '\n'
+    printf ' %sAn interplanetary microblogging platform.%s\n' "$_D" "$_R"
+    printf ' Run %snix-misskey help%s to see available commands.\n' "$_B" "$_R"
+    if [ ! -f .config/default.yml ]; then
+      printf ' First time? Run %snix-misskey setup%s to initialize.\n' "$_B" "$_R"
+    fi
+    printf '\n'
+    unset _G _D _B _R
 
     if [ -z "$DIRENV_IN_ENVRC" ]; then
       trap 'nix-misskey stop' EXIT
