@@ -36,7 +36,6 @@ pkgs.mkShell {
       trap 'nix-misskey stop' EXIT
     fi
 
-    export NODE_ENV="development"
     export VITE_PORT="5173"
     export EMBED_VITE_PORT="5174"
     export PORT="3000"

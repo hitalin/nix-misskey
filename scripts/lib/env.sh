@@ -1,7 +1,6 @@
 # shellcheck shell=bash
 # Environment defaults shared by every sub-command.
 
-export NODE_ENV="${NODE_ENV:-development}"
 export VITE_PORT="${VITE_PORT:-5173}"
 export EMBED_VITE_PORT="${EMBED_VITE_PORT:-5174}"
 export PORT="${PORT:-3000}"
