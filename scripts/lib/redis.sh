@@ -7,7 +7,10 @@ redis_start() {
   if redis_running; then return 0; fi
   mkdir -p "$REDIS_DIR"
   install -m 644 "$REDIS_CONF" "$REDIS_DIR/redis.conf"
-  redis-server "$REDIS_DIR/redis.conf"
+  redis-server "$REDIS_DIR/redis.conf" \
+    --dir "$REDIS_DIR" \
+    --pidfile "$REDIS_DIR/redis.pid" \
+    --logfile "$REDIS_DIR/redis.log"
   for _ in $(seq 1 10); do
     redis_running && return 0
     sleep 1
