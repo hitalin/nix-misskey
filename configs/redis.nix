@@ -8,7 +8,7 @@ builtins.toFile "redis.conf" ''
   appendonly no
   stop-writes-on-bgsave-error no
   maxmemory 512mb
-  maxmemory-policy allkeys-lru
+  maxmemory-policy noeviction
   databases 16
   tcp-keepalive 300
   supervised no
