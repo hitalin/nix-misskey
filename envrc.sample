@@ -1,1 +1,5 @@
+# Silence direnv's noisy "export +AR +AS ..." log line.
+# `direnv: loading` is printed before .envrc runs, so it remains visible.
+export DIRENV_LOG_FORMAT=
+
 use flake ./.nix-misskey
