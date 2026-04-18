@@ -33,17 +33,16 @@ pkgs.mkShell {
     export VITE_PORT="5173"
     export EMBED_VITE_PORT="5174"
     export PORT="3000"
-
     export NODE_OPTIONS="--max-old-space-size=4096"
+
+    export PGDATA="$PWD/data/postgres"
+    export PGHOST="localhost"
+    export PGUSER="postgres"
+    export PGPASSWORD="postgres"
+    export PGDATABASE="misskey"
+    export PGPORT="5433"
   '';
 
   LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
   LANG = "en_US.UTF-8";
-
-  PGDATA = "$(pwd)/data/postgres";
-  PGHOST = "localhost";
-  PGUSER = "postgres";
-  PGPASSWORD = "postgres";
-  PGDATABASE = "misskey";
-  PGPORT = "5433";
 }
