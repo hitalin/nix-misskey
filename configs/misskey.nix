@@ -1,9 +1,11 @@
 { pkgs }:
 
 let
-  writeConfig = name: text: pkgs.writeTextFile {
-    inherit name text;
-  };
+  writeConfig =
+    name: text:
+    pkgs.writeTextFile {
+      inherit name text;
+    };
 in
 {
   default = writeConfig "default.yml" ''
@@ -16,7 +18,7 @@ in
       user: "postgres"
       pass: "postgres"
     redis:
-      host: "localhost"
+      host: "127.0.0.1"
       port: 6379
     id: "aid"
     vite:
@@ -34,7 +36,7 @@ in
       user: "postgres"
       pass: "postgres"
     redis:
-      host: "localhost"
+      host: "127.0.0.1"
       port: 6379
     id: "test"
   '';
