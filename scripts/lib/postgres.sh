@@ -29,7 +29,9 @@ init_postgres() {
 
   local pwfile
   pwfile="$(mktemp)"
-  trap 'rm -f "$pwfile"' RETURN
+  # local vars are out of scope when RETURN fires; expand $pwfile at trap-set time.
+  # shellcheck disable=SC2064
+  trap "rm -f '$pwfile'" RETURN
   printf '%s' "$PGPASSWORD" > "$pwfile"
 
   initdb -D "$PGDATA" \
