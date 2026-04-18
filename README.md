@@ -48,37 +48,52 @@ nix develop ./.nix-misskey
 初回のみ依存関係をインストールしてビルド:
 
 ```bash
-nix-misskey setup
+nix-misskey app setup
 ```
 
 開発サーバーを起動。PostgreSQL / Redis / 設定ファイルが未初期化なら
 自動的に立ち上げます。
 
 ```bash
-nix-misskey start
+nix-misskey app dev
 ```
 
-2 回目以降は `nix develop` 後に `nix-misskey start` の 1 コマンドで
+2 回目以降は `nix develop` 後に `nix-misskey app dev` の 1 コマンドで
 完結します。
 
 ## コマンド一覧
 
+トップレベル:
+
 | コマンド | 説明 |
 |---|---|
-| `start` | サービスを ensure して dev サーバーを起動（必要なら自動初期化） |
-| `setup` | 依存関係をインストールしてビルド + マイグレーション（初回） |
-| `stop` | PostgreSQL と Redis を停止 |
-| `restart` | `stop` してから `start` |
 | `status` | 各サービスの稼働状況を表示 |
-| `reset` | `clean` してから `setup`（破壊的に再構築） |
+| `stop` | PostgreSQL と Redis を停止 |
+| `reset` | `clean` してから `app setup`（破壊的に再構築） |
 | `clean` | data / node_modules / 設定を削除 |
-| `psql` | misskey DB に psql で接続 |
-| `redis-cli` | redis-cli を起動 |
-| `logs [svc]` | ログを tail (`postgres` / `redis` / `misskey` / `all`) |
-| `test` | 全テストを実行 |
-| `test:unit` | バックエンドのユニットテストのみ |
-| `test:e2e` | バックエンドの E2E テストのみ |
+| `logs <db\|cache\|app\|all>` | ログを tail |
 | `help` | ヘルプを表示 |
+
+名前空間付き:
+
+| コマンド | 説明 |
+|---|---|
+| `app setup` | 依存関係をインストールしてビルド + マイグレーション（初回） |
+| `app dev` | サービスを ensure して dev サーバーを起動 |
+| `app build` | `pnpm build`（production）を単独実行 |
+| `app migrate` | `pnpm migrate` を単独実行 |
+| `db init` | PostgreSQL を破壊的に再初期化 |
+| `db start` / `db stop` | PostgreSQL の起動・停止 |
+| `db psql` | misskey DB に psql で接続 |
+| `cache init` | Redis を破壊的に再初期化 |
+| `cache start` / `cache stop` | Redis の起動・停止 |
+| `cache cli` | redis-cli を起動 |
+| `test unit` | バックエンドのユニットテストのみ |
+| `test e2e` | バックエンドの E2E テストのみ |
+| `test all` | 全テストを実行 |
+
+各サブコマンドは `nix-misskey-app-dev` 等の独立した bin としても
+PATH 上にあり、直接呼び出せます。
 
 ## ポート
 

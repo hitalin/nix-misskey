@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Redis lifecycle: redis_running / redis_start / redis_stop / init_redis / ensure_redis.
+# Redis primitives. Higher-level commands compose these.
 
 redis_running() { redis-cli -p 6379 ping >/dev/null 2>&1; }
 
@@ -25,7 +25,7 @@ redis_stop() {
 }
 
 # Destructive: wipe data dir and start fresh.
-init_redis() {
+redis_init() {
   log "Initializing Redis..."
   redis_stop
   rm -rf "$REDIS_DIR"
@@ -33,10 +33,10 @@ init_redis() {
   success "Redis initialized"
 }
 
-# Idempotent: init only when redis dir is missing, otherwise just start.
-ensure_redis() {
+# Idempotent.
+redis_ensure() {
   if [ ! -d "$REDIS_DIR" ]; then
-    init_redis
+    redis_init
   else
     redis_start
   fi

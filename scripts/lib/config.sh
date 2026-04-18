@@ -1,7 +1,6 @@
 # shellcheck shell=bash
-# Misskey runtime config (.config/default.yml) lifecycle.
+# Misskey config (.config/default.yml) lifecycle.
 
-# Idempotent: install default.yml only if missing.
 ensure_config() {
   if [ ! -f .config/default.yml ]; then
     log "Creating Misskey configuration..."

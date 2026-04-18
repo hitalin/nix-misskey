@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# PostgreSQL lifecycle: pg_running / pg_start / pg_stop / init_postgres / ensure_postgres.
+# PostgreSQL primitives. Higher-level commands compose these.
 
 pg_running() { pg_isready -h "$PGHOST" -p "$PGPORT" >/dev/null 2>&1; }
 
@@ -20,8 +20,8 @@ pg_stop() {
   fi
 }
 
-# Destructive: wipe PGDATA and re-initialize from scratch.
-init_postgres() {
+# Destructive: wipe PGDATA and re-initialize.
+pg_init() {
   log "Initializing PostgreSQL..."
   pg_stop
   rm -rf "$PGDATA"
@@ -49,10 +49,10 @@ init_postgres() {
   success "PostgreSQL initialized"
 }
 
-# Idempotent: init only when PGDATA is missing, otherwise just start.
-ensure_postgres() {
+# Idempotent: init only when missing, otherwise just start.
+pg_ensure() {
   if [ ! -f "$PGDATA/PG_VERSION" ]; then
-    init_postgres
+    pg_init
   else
     pg_start
   fi
