@@ -23,7 +23,7 @@ do_setup() {
   log "Building Misskey (production)..."
   if ! pnpm build; then
     warn "Full build failed (often a frontend i18n issue in forks)."
-    warn "Continuing — frontend will be compiled on demand by 'nix-misskey app dev'."
+    warn "Continuing — frontend will be compiled on demand by 'nix-misskey dev'."
   fi
   log "Running migrations..."
   pnpm migrate
@@ -34,7 +34,7 @@ do_dev() {
   redis_ensure
   ensure_config
   if [ ! -d node_modules ]; then
-    error "Dependencies not installed. Run 'nix-misskey app setup' first."
+    error "Dependencies not installed. Run 'nix-misskey setup' first."
   fi
   mkdir -p "$LOG_DIR"
   pnpm dev
