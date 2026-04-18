@@ -49,8 +49,11 @@ cmd_setup() {
   log "Installing dependencies..."
   git submodule update --init
   pnpm install --frozen-lockfile
-  log "Building Misskey..."
-  pnpm build
+  log "Building Misskey (production)..."
+  if ! pnpm build; then
+    warn "Full build failed (often a frontend i18n issue in forks)."
+    warn "Continuing — frontend will be compiled on demand by 'pnpm dev'."
+  fi
   log "Running migrations..."
   pnpm migrate
   success "Setup completed"
