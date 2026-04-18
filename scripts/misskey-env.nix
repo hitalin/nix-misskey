@@ -1,11 +1,17 @@
-{ pkgs, configs }:
+{
+  pkgs,
+  configs,
+  nodejs,
+  pnpmShim,
+}:
 
 let
   pathPrefix = pkgs.lib.makeBinPath (
-    with pkgs;
     [
-      nodejs_22
-      pnpm
+      nodejs
+      pnpmShim
+    ]
+    ++ (with pkgs; [
       postgresql_15
       redis
       git
@@ -13,7 +19,7 @@ let
       gnugrep
       gnused
       gawk
-    ]
+    ])
   );
 
   libDir = pkgs.runCommandLocal "nix-misskey-lib" { } ''

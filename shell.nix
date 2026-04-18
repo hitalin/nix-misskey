@@ -1,11 +1,19 @@
-{ pkgs, scripts }:
+{
+  pkgs,
+  scripts,
+  nodejs,
+  pnpmShim,
+}:
 
 pkgs.mkShell {
   name = "misskey-dev-shell";
 
-  packages = with pkgs; [
-    nodejs_22
-    pnpm
+  packages = [
+    nodejs
+    pnpmShim
+    scripts.misskeyEnv
+  ]
+  ++ (with pkgs; [
     postgresql_15
     redis
     ffmpeg
@@ -13,8 +21,7 @@ pkgs.mkShell {
     gcc
     git
     gnumake
-    scripts.misskeyEnv
-  ];
+  ]);
 
   shellHook = ''
     echo "🚀 Welcome to Misskey development environment"
@@ -41,6 +48,8 @@ pkgs.mkShell {
     export PGPASSWORD="postgres"
     export PGDATABASE="misskey"
     export PGPORT="5433"
+
+    export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   '';
 
   LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
