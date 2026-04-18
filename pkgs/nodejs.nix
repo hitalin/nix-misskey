@@ -1,7 +1,7 @@
 { pkgs, lib, system }:
 
 let
-  version = "22.15.0";
+  version = "22.21.1";
 
   arch =
     {
@@ -14,10 +14,10 @@ let
 
   sha256 =
     {
-      "x86_64-linux" = "dafe2e8f82cb97de1bd10db9e2ec4c07bbf53389b0799b1e095a918951e78fd4";
-      "aarch64-linux" = "d68adf72c531f1118bee75b20ffbc5911accfda5e73454a798625464b40a4adf";
-      "x86_64-darwin" = "7dab3f93551d88f1e63db6b32bae6d4858e16740e9849ebbeac1d43f5055d8f0";
-      "aarch64-darwin" = "6e278a107d50da24b644dd26810a639a5f8ca67b55086e6b693caabcbb759912";
+      "x86_64-linux" = "680d3f30b24a7ff24b98db5e96f294c0070f8f9078df658da1bce1b9c9873c88";
+      "aarch64-linux" = "e660365729b434af422bcd2e8e14228637ecf24a1de2cd7c916ad48f2a0521e1";
+      "x86_64-darwin" = "2f4fd943768fdd82308da88bb53f3a16259275c770bc4393e45b986844ea3017";
+      "aarch64-darwin" = "39f53ffcf1604291e85974c8588bb290c14b358ac085e342920e703651d63c5e";
     }
     .${system};
 in
