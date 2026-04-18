@@ -39,28 +39,32 @@ direnv を使わない場合:
 nix develop ./.nix-misskey
 ```
 
-初回のみ:
+初回のみ依存関係をインストールしてビルド:
 
 ```bash
 nix-misskey setup
 ```
 
-開発サーバーを起動:
+開発サーバーを起動。PostgreSQL / Redis / 設定ファイルが未初期化なら
+自動的に立ち上げます。
 
 ```bash
 nix-misskey start
 ```
 
+2 回目以降は `nix develop` 後に `nix-misskey start` の 1 コマンドで
+完結します。
+
 ## コマンド一覧
 
 | コマンド | 説明 |
 |---|---|
-| `setup` | PostgreSQL / Redis / 設定ファイル / 依存関係を初期化 |
-| `start` | フロントエンド + バックエンドを起動 |
+| `start` | サービスを ensure して dev サーバーを起動（必要なら自動初期化） |
+| `setup` | 依存関係をインストールしてビルド + マイグレーション（初回） |
 | `stop` | PostgreSQL と Redis を停止 |
 | `restart` | `stop` してから `start` |
 | `status` | 各サービスの稼働状況を表示 |
-| `reset` | `clean` してから `setup` |
+| `reset` | `clean` してから `setup`（破壊的に再構築） |
 | `clean` | data / node_modules / 設定を削除 |
 | `psql` | misskey DB に psql で接続 |
 | `redis-cli` | redis-cli を起動 |
@@ -84,8 +88,10 @@ nix-misskey start
 
 設定は `configs/` 配下にあります:
 
-- `misskey.nix` - Misskey の `default.yml` / `test.yml`
+- `misskey/dev.yml` - 開発用 Misskey 設定
+- `misskey/test.yml` - テスト用 Misskey 設定
 - `postgres.nix` - `postgresql.conf` と `pg_hba.conf`
 - `redis.nix` - `redis.conf`
 
-CLI スクリプト本体は `scripts/nix-misskey.sh` です。
+CLI 本体は `scripts/nix-misskey.sh` で、機能別モジュールは
+`scripts/lib/{common,postgres,redis,config,tests}.sh` に分離されています。

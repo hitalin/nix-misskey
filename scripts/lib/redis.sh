@@ -1,0 +1,40 @@
+# shellcheck shell=bash
+# Redis lifecycle: redis_running / redis_start / redis_stop / init_redis / ensure_redis.
+
+redis_running() { redis-cli -p 6379 ping >/dev/null 2>&1; }
+
+redis_start() {
+  if redis_running; then return 0; fi
+  mkdir -p "$REDIS_DIR"
+  install -m 644 "$REDIS_CONF" "$REDIS_DIR/redis.conf"
+  redis-server "$REDIS_DIR/redis.conf"
+  for _ in $(seq 1 10); do
+    redis_running && return 0
+    sleep 1
+  done
+  error "Redis failed to start"
+}
+
+redis_stop() {
+  if redis_running; then
+    redis-cli shutdown nosave 2>/dev/null || true
+  fi
+}
+
+# Destructive: wipe data dir and start fresh.
+init_redis() {
+  log "Initializing Redis..."
+  redis_stop
+  rm -rf "$REDIS_DIR"
+  redis_start
+  success "Redis initialized"
+}
+
+# Idempotent: init only when redis dir is missing, otherwise just start.
+ensure_redis() {
+  if [ ! -d "$REDIS_DIR" ]; then
+    init_redis
+  else
+    redis_start
+  fi
+}
