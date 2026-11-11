@@ -9,11 +9,17 @@ Nix flake で [Misskey](https://github.com/misskey-dev/misskey) の開発環境�
 - [Nix](https://nixos.org/download.html)（flakes 有効化済み）
 - [direnv](https://direnv.net/)（推奨）
 
-Node.js / pnpm のバージョンは
-[yamisskey の `.node-version` (22.15.0) と `package.json#packageManager`
-(`pnpm@10.30.3`)](https://github.com/yamisskey-dev/yamisskey)
-に合わせて固定。Node.js は公式バイナリを Nix 内で vendoring し、pnpm は
-Node 同梱の corepack 経由で `packageManager` 指定の版を自動取得します。
+Node.js は [yamisskey](https://github.com/yamisskey-dev/yamisskey) の
+`.node-version` に合わせて `pkgs/nodejs.json` で固定し、公式バイナリを
+Nix 内で vendoring します。pnpm は corepack 経由で
+`package.json#packageManager` 指定の版を自動取得します。
+
+`.node-version` が変わったら pin を更新します（dev shell 起動時に
+ずれを警告します）:
+
+```bash
+.nix-misskey/pkgs/update-nodejs.sh "$(cat .node-version)"
+```
 
 flakes の有効化:
 
@@ -39,13 +45,17 @@ cp .nix-misskey/envrc.sample .envrc
 direnv allow
 ```
 
+`envrc.sample` は [nix-direnv](https://github.com/nix-community/nix-direnv)
+を使い、評価済みの dev shell をキャッシュします（未インストールなら
+自動で取得）。2 回目以降のディレクトリ移動は即座に完了します。
+
 direnv を使わない場合:
 
 ```bash
 nix develop ./.nix-misskey
 ```
 
-初回のみ依存関係をインストールしてビルド:
+初回のみ依存関係をインストールし、backend をビルドして migrate:
 
 ```bash
 nix-misskey setup
@@ -71,7 +81,7 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | コマンド | 説明 |
 |---|---|
 | `dev` | サービスを ensure して `pnpm dev` |
-| `setup` | 依存インストール + build + migrate（初回） |
+| `setup` | 依存インストール + backend build + migrate（初回） |
 | `build` | `pnpm build`（production） |
 | `migrate` | `pnpm migrate` |
 | `revert` | `pnpm revert`（直前のマイグレーションを巻き戻し） |
@@ -112,9 +122,12 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 
 | コマンド | 説明 |
 |---|---|
-| `test` | 全テスト |
-| `test:unit` | バックエンドのユニットテスト |
-| `test:e2e` | バックエンドの E2E テスト |
+| `test` | 全テスト（frontend / misskey-js / backend unit / backend e2e） |
+| `test:unit [vitest args]` | バックエンドのユニットテスト |
+| `test:e2e [vitest args]` | バックエンドの E2E テスト |
+
+テストは専用の `misskey-test` データベースと Redis DB 1 を使うため、
+開発用データは消えません。例: `nix-misskey test:unit test/unit/misc`
 
 各サブコマンドは `nix-misskey-dev` / `nix-misskey-db-psql` のような
 独立した bin として PATH 上にあり、直接呼び出すこともできます。
@@ -124,6 +137,7 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | サービス | ポート |
 |---|---|
 | Misskey | 3000 |
+| Misskey (test) | 61812 |
 | Vite (frontend) | 5173 |
 | Vite (frontend-embed) | 5174 |
 | PostgreSQL | 5433 |
@@ -135,8 +149,9 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 |---|---|
 | `devShells.default` | `nix develop` 用の開発シェル |
 | `packages.{default,nix-misskey}` | `nix-misskey` CLI 単体 |
-| `packages.nodejs` | yamisskey が指定する Node.js 22.15.0 |
+| `packages.nodejs` | `pkgs/nodejs.json` で固定した Node.js |
 | `apps.default` | `nix run` で CLI を直接呼び出し |
+| `checks` | `nix flake check` で CLI をビルド（全サブコマンドに shellcheck） |
 | `formatter` | `nix fmt` で `.nix` を整形 |
 
 例:
