@@ -17,6 +17,7 @@ pkgs.mkShell (
     ++ (with pkgs; [
       postgresql_15
       redis
+      meilisearch
       ffmpeg
       python311
       gcc

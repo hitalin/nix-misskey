@@ -15,6 +15,7 @@ let
   ++ (with pkgs; [
     postgresql_15
     redis
+    meilisearch
     git
     coreutils
     gnugrep

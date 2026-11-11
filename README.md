@@ -127,7 +127,8 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | `test:e2e [vitest args]` | バックエンドの E2E テスト |
 
 テストは専用の `misskey-test` データベースと Redis DB 1 を使うため、
-開発用データは消えません。例: `nix-misskey test:unit test/unit/misc`
+開発用データは消えません。検索のテスト用に Meilisearch も
+テスト中だけ起動します。例: `nix-misskey test:unit test/unit/misc`
 
 各サブコマンドは `nix-misskey-dev` / `nix-misskey-db-psql` のような
 独立した bin として PATH 上にあり、直接呼び出すこともできます。
@@ -142,6 +143,7 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | Vite (frontend-embed) | 5174 |
 | PostgreSQL | 5433 |
 | Redis | 6379 |
+| Meilisearch (test 実行中のみ) | 57712 |
 
 ## Flake outputs
 
