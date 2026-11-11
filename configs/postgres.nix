@@ -4,10 +4,17 @@
   conf = pkgs.writeText "postgresql.conf" ''
     listen_addresses = 'localhost'
     port = 5433
+    # TCP only: a socket under PGDATA breaks on deep checkouts (107-byte limit).
+    unix_socket_directories = '''
     max_connections = 100
     shared_buffers = 128MB
     dynamic_shared_memory_type = posix
     max_wal_size = 1GB
+    # Dev-only durability trade-off: data here is disposable, so skip the
+    # disk flushes that dominate migration and test time.
+    fsync = off
+    synchronous_commit = off
+    full_page_writes = off
     min_wal_size = 80MB
     log_destination = 'stderr'
     logging_collector = on

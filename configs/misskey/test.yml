@@ -1,5 +1,7 @@
-url: "http://localhost:3000/"
-port: 3000
+# Mirrors upstream .github/misskey/test.yml, pointed at the nix-misskey services.
+url: "http://misskey.local"
+setupPassword: "example_password_please_change_this_or_you_will_get_hacked"
+port: 61812
 db:
   host: "localhost"
   port: 5433
@@ -9,4 +11,6 @@ db:
 redis:
   host: "127.0.0.1"
   port: 6379
-id: "test"
+  db: 1
+id: "aidx"
+proxyRemoteFiles: true

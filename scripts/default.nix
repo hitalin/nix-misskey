@@ -8,20 +8,19 @@
 let
   lib = pkgs.lib;
 
-  runtimeInputs =
-    [
-      nodejs
-      pnpmShim
-    ]
-    ++ (with pkgs; [
-      postgresql_15
-      redis
-      git
-      coreutils
-      gnugrep
-      gnused
-      gawk
-    ]);
+  runtimeInputs = [
+    nodejs
+    pnpmShim
+  ]
+  ++ (with pkgs; [
+    postgresql_15
+    redis
+    git
+    coreutils
+    gnugrep
+    gnused
+    gawk
+  ]);
 
   libDir = pkgs.runCommandLocal "nix-misskey-lib" { } ''
     mkdir -p $out
@@ -118,7 +117,7 @@ let
 
       App / lifecycle:
         dev              Ensure services + run pnpm dev
-        setup            Install deps, build, migrate (initial)
+        setup            Install deps, build backend, migrate (initial)
         build            pnpm build
         migrate          pnpm migrate
         revert           pnpm revert (rollback last DB migration)

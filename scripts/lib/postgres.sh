@@ -3,15 +3,15 @@
 
 pg_running() { pg_isready -h "$PGHOST" -p "$PGPORT" >/dev/null 2>&1; }
 
+# Config is re-installed on every start so edits to configs/postgres.nix
+# reach existing data directories.
 pg_start() {
   if pg_running; then return 0; fi
   mkdir -p "$PGDATA/log"
-  pg_ctl -D "$PGDATA" -l "$PGDATA/log/postgresql.log" -o "-k $PGDATA" start
-  for _ in $(seq 1 30); do
-    pg_running && return 0
-    sleep 1
-  done
-  error "PostgreSQL failed to start"
+  install -m 600 "$PG_CONF" "$PGDATA/postgresql.conf"
+  install -m 600 "$PG_HBA"  "$PGDATA/pg_hba.conf"
+  pg_ctl -D "$PGDATA" -l "$PGDATA/log/postgresql.log" -w start >/dev/null \
+    || error "PostgreSQL failed to start (see $PGDATA/log)"
 }
 
 pg_stop() {
@@ -40,9 +40,6 @@ pg_init() {
     --encoding=UTF8 \
     --username="$PGUSER" \
     --pwfile="$pwfile" >/dev/null
-
-  install -m 600 "$PG_CONF" "$PGDATA/postgresql.conf"
-  install -m 600 "$PG_HBA"  "$PGDATA/pg_hba.conf"
 
   pg_start
   createdb -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE"

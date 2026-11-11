@@ -20,11 +20,11 @@ do_setup() {
   log "Installing dependencies..."
   git submodule update --init
   pnpm install --frozen-lockfile
-  log "Building Misskey (production)..."
-  if ! pnpm build; then
-    warn "Full build failed (often a frontend i18n issue in forks)."
-    warn "Continuing — frontend will be compiled on demand by 'nix-misskey dev'."
-  fi
+  # Only the backend is needed for migrations; 'nix-misskey dev' rebuilds
+  # everything else itself, so a full production build here is wasted time.
+  log "Building backend..."
+  pnpm build-pre
+  pnpm --filter backend... build
   log "Running migrations..."
   pnpm migrate
 }

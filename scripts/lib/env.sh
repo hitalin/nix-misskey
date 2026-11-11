@@ -13,6 +13,8 @@ export PGPORT="${PGPORT:-5433}"
 export LC_ALL="${LC_ALL:-C}"
 export LANG="${LANG:-C}"
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+# Cache V8 bytecode across runs: pnpm / rolldown / vite / vitest start faster.
+export NODE_COMPILE_CACHE="${NODE_COMPILE_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/nix-misskey/node-compile-cache}"
 
 REDIS_DIR="$PWD/data/redis"
 LOG_DIR="$PWD/data/logs"

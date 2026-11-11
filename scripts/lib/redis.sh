@@ -11,9 +11,9 @@ redis_start() {
     --dir "$REDIS_DIR" \
     --pidfile "$REDIS_DIR/redis.pid" \
     --logfile "$REDIS_DIR/redis.log"
-  for _ in $(seq 1 10); do
+  for _ in $(seq 1 50); do
     redis_running && return 0
-    sleep 1
+    sleep 0.1
   done
   error "Redis failed to start"
 }
