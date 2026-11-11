@@ -1,7 +1,12 @@
-{ pkgs, lib, system }:
+{
+  pkgs,
+  lib,
+  system,
+}:
 
 let
-  version = "22.21.1";
+  pin = lib.importJSON ./nodejs.json;
+  inherit (pin) version;
 
   arch =
     {
@@ -12,14 +17,7 @@ let
     }
     .${system} or (throw "nodejs ${version}: unsupported system ${system}");
 
-  sha256 =
-    {
-      "x86_64-linux" = "680d3f30b24a7ff24b98db5e96f294c0070f8f9078df658da1bce1b9c9873c88";
-      "aarch64-linux" = "e660365729b434af422bcd2e8e14228637ecf24a1de2cd7c916ad48f2a0521e1";
-      "x86_64-darwin" = "2f4fd943768fdd82308da88bb53f3a16259275c770bc4393e45b986844ea3017";
-      "aarch64-darwin" = "39f53ffcf1604291e85974c8588bb290c14b358ac085e342920e703651d63c5e";
-    }
-    .${system};
+  sha256 = pin.sha256.${system};
 in
 pkgs.stdenv.mkDerivation {
   pname = "nodejs";
@@ -49,7 +47,7 @@ pkgs.stdenv.mkDerivation {
   '';
 
   meta = with lib; {
-    description = "Node.js ${version} (vendored binary, matches yamisskey .node-version)";
+    description = "Node.js ${version} (vendored binary, pinned in pkgs/nodejs.json)";
     homepage = "https://nodejs.org";
     license = licenses.mit;
     platforms = [

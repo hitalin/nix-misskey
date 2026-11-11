@@ -2,4 +2,17 @@
 # `direnv: loading` is printed before .envrc runs, so it remains visible.
 export DIRENV_LOG_FORMAT=
 
+# nix-direnv caches the evaluated dev shell, so re-entering the directory takes
+# milliseconds instead of re-evaluating the flake, and the shell survives
+# nix-collect-garbage. Bootstrapped here when not already installed.
+if ! has nix_direnv_version || ! nix_direnv_version 3.2.0; then
+  source_url "https://raw.githubusercontent.com/nix-community/nix-direnv/3.2.0/direnvrc" "sha256-hW6NC1JHue3IjZN3uDM6l6I2PMaauqd2D7hXYJ1Zfr4="
+fi
+
+# `use flake` only watches flake.nix / flake.lock; reload on other edits too.
+watch_file .nix-misskey/shell.nix
+watch_dir .nix-misskey/configs
+watch_dir .nix-misskey/pkgs
+watch_dir .nix-misskey/scripts
+
 use flake ./.nix-misskey

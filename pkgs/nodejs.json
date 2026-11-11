@@ -1,0 +1,9 @@
+{
+  "version": "26.4.0",
+  "sha256": {
+    "x86_64-linux": "5c4286dcd5bbd5acb1ccc7eb0e088bd5eb1e3affad671ee9364004f8f6a4a431",
+    "aarch64-linux": "f6d8eedc52170667d45730ac2f413c4aa1e7cd2165c9cac5746ef3cb0f4ec45a",
+    "x86_64-darwin": "06607eef24180c3d1299455efe315bfef67b68b271dc307841cb3fb3af39e211",
+    "aarch64-darwin": "bef4c7e75087c029835f519a7ba640eba52fa617fadb3a9049828ff3b45b57dd"
+  }
+}

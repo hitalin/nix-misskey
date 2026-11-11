@@ -1,48 +1,77 @@
 {
   description = "Misskey - An interplanetary microblogging platform 🚀";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
+    { self, nixpkgs }:
+    let
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      perSystem =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          nodejs = pkgs.callPackage ./pkgs/nodejs.nix { inherit system; };
+          # Node.js >= 25 no longer bundles corepack, so run nixpkgs' corepack
+          # on the pinned Node. It fetches the pnpm version named in
+          # package.json#packageManager.
+          pnpmShim = pkgs.writeShellScriptBin "pnpm" ''
+            export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+            exec ${nodejs}/bin/node ${pkgs.corepack}/dist/pnpm.js "$@"
+          '';
+          configs = import ./configs { inherit pkgs; };
+          scripts = import ./scripts {
+            inherit
+              pkgs
+              configs
+              nodejs
+              pnpmShim
+              ;
+          };
+        in
+        {
+          inherit pkgs nodejs scripts;
+          shell = import ./shell.nix {
+            inherit
+              pkgs
+              scripts
+              nodejs
+              pnpmShim
+              ;
+          };
+        };
+
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f (perSystem system));
+    in
     {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-        nodejs = pkgs.callPackage ./pkgs/nodejs.nix { inherit system; };
-        pnpmShim = pkgs.writeShellScriptBin "pnpm" ''
-          export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-          exec ${nodejs}/bin/corepack pnpm "$@"
-        '';
-        configs = import ./configs { inherit pkgs; };
-        scripts = import ./scripts {
-          inherit pkgs configs nodejs pnpmShim;
-        };
-      in
-      {
-        devShells.default = import ./shell.nix {
-          inherit pkgs scripts nodejs pnpmShim;
-        };
+      devShells = forAllSystems (s: {
+        default = s.shell;
+      });
 
-        packages = {
-          default = scripts.misskeyEnv;
-          nix-misskey = scripts.misskeyEnv;
-          nodejs = nodejs;
-        };
+      packages = forAllSystems (s: {
+        default = s.scripts.misskeyEnv;
+        nix-misskey = s.scripts.misskeyEnv;
+        nodejs = s.nodejs;
+      });
 
-        apps.default = {
+      apps = forAllSystems (s: {
+        default = {
           type = "app";
-          program = "${scripts.misskeyEnv}/bin/nix-misskey";
+          program = "${s.scripts.misskeyEnv}/bin/nix-misskey";
         };
+      });
 
-        formatter = pkgs.nixfmt;
-      }
-    );
+      # Building the CLI runs shellcheck on every sub-command.
+      checks = forAllSystems (s: {
+        nix-misskey = s.scripts.misskeyEnv;
+      });
+
+      formatter = forAllSystems (s: s.pkgs.nixfmt-tree);
+    };
 }
