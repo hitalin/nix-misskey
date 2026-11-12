@@ -10,9 +10,8 @@ if ! has nix_direnv_version || ! nix_direnv_version 3.2.0; then
 fi
 
 # `use flake` only watches flake.nix / flake.lock; reload on other edits too.
-watch_file .nix-misskey/shell.nix
-watch_dir .nix-misskey/configs
+watch_file .nix-misskey/shell.nix .nix-misskey/cli.nix
+watch_dir .nix-misskey/modules
 watch_dir .nix-misskey/pkgs
-watch_dir .nix-misskey/scripts
 
 use flake ./.nix-misskey
