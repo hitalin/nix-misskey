@@ -1,29 +1,15 @@
 {
   pkgs,
-  scripts,
+  cli,
+  modules,
   nodejs,
-  pnpmShim,
 }:
 
 pkgs.mkShell (
   {
     name = "misskey-dev-shell";
 
-    packages = [
-      nodejs
-      pnpmShim
-      scripts.misskeyEnv
-    ]
-    ++ (with pkgs; [
-      postgresql_15
-      redis
-      meilisearch
-      ffmpeg
-      python311
-      gcc
-      git
-      gnumake
-    ]);
+    packages = [ cli ] ++ modules.packages ++ modules.shellPackages;
 
     shellHook = ''
       if [ -z "$NO_COLOR" ]; then
@@ -45,11 +31,15 @@ pkgs.mkShell (
       printf ' %sAn interplanetary microblogging platform.%s\n' "$_D" "$_R"
       printf ' Run %snix-misskey help%s to see available commands.\n' "$_B" "$_R"
       if [ ! -f .config/default.yml ]; then
-        printf ' First time? Run %snix-misskey setup%s to initialize.\n' "$_B" "$_R"
+        printf ' First time? %snix-misskey dev%s sets everything up.\n' "$_B" "$_R"
       fi
       if [ -f .node-version ] && [ "$(cat .node-version)" != "${nodejs.version}" ]; then
         printf ' %s!%s .node-version wants Node %s but this shell pins ${nodejs.version}.\n' "$_G" "$_R" "$(cat .node-version)"
-        printf '   Run %s.nix-misskey/pkgs/update-nodejs.sh "$(cat .node-version)"%s to re-pin.\n' "$_B" "$_R"
+        if [ -x .nix-misskey/pkgs/update-nodejs.sh ]; then
+          printf '   Run %s.nix-misskey/pkgs/update-nodejs.sh "$(cat .node-version)"%s to re-pin.\n' "$_B" "$_R"
+        else
+          printf '   Clone nix-misskey as %s.nix-misskey%s to re-pin (see README).\n' "$_B" "$_R"
+        fi
       fi
       printf '\n'
       unset _G _D _B _R
@@ -58,21 +48,13 @@ pkgs.mkShell (
         trap 'nix-misskey stop' EXIT
       fi
 
-      export VITE_PORT="5173"
-      export EMBED_VITE_PORT="5174"
-      export PORT="3000"
-      export NODE_OPTIONS="--max-old-space-size=4096"
-
-      export PGDATA="$PWD/data/postgres"
-      export PGHOST="localhost"
-      export PGUSER="postgres"
-      export PGPASSWORD="postgres"
-      export PGDATABASE="misskey"
-      export PGPORT="5433"
-
-      export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-      export NODE_COMPILE_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/nix-misskey/node-compile-cache"
-    '';
+      ${
+        pkgs.lib.concatStrings (
+          pkgs.lib.mapAttrsToList (k: v: ''
+            export ${k}="${v}"
+          '') modules.env
+        )
+      }    '';
 
     LANG = "en_US.UTF-8";
   }

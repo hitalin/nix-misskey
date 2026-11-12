@@ -25,25 +25,26 @@
             export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
             exec ${nodejs}/bin/node ${pkgs.corepack}/dist/pnpm.js "$@"
           '';
-          configs = import ./configs { inherit pkgs; };
-          scripts = import ./scripts {
-            inherit
-              pkgs
-              configs
-              nodejs
-              pnpmShim
-              ;
-          };
+          mkModules = pnpmShim: import ./modules { inherit pkgs nodejs pnpmShim; };
+          # The smoke test builds the CLI around a stub pnpm.
+          mkCli =
+            pnpmShim:
+            import ./cli.nix {
+              inherit pkgs;
+              modules = mkModules pnpmShim;
+            };
+          cli = mkCli pnpmShim;
         in
         {
-          inherit pkgs nodejs scripts;
+          inherit
+            pkgs
+            nodejs
+            cli
+            mkCli
+            ;
           shell = import ./shell.nix {
-            inherit
-              pkgs
-              scripts
-              nodejs
-              pnpmShim
-              ;
+            inherit pkgs cli nodejs;
+            modules = mkModules pnpmShim;
           };
         };
 
@@ -55,21 +56,24 @@
       });
 
       packages = forAllSystems (s: {
-        default = s.scripts.misskeyEnv;
-        nix-misskey = s.scripts.misskeyEnv;
+        default = s.cli;
+        nix-misskey = s.cli;
         nodejs = s.nodejs;
       });
 
       apps = forAllSystems (s: {
         default = {
           type = "app";
-          program = "${s.scripts.misskeyEnv}/bin/nix-misskey";
+          program = "${s.cli}/bin/nix-misskey";
         };
       });
 
       # Building the CLI runs shellcheck on every sub-command.
       checks = forAllSystems (s: {
-        nix-misskey = s.scripts.misskeyEnv;
+        nix-misskey = s.cli;
+        smoke = import ./tests/smoke.nix {
+          inherit (s) pkgs mkCli;
+        };
       });
 
       formatter = forAllSystems (s: s.pkgs.nixfmt-tree);

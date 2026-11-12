@@ -30,17 +30,40 @@ echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
 ## セットアップ
 
-Misskey 本体を clone し、本リポジトリを `.nix-misskey` として併置します。
+Misskey 本体を clone し、そのルートで dev shell に入って `nix-misskey dev`
+を実行します。初回は `dev` が依存インストール・backend ビルド・migrate
+（`nix-misskey setup` 相当）を自動で行ってから起動します。
+
+この最短手順は、固定している Node.js が checkout の `.node-version` と
+一致する場合に使えます（ずれていると dev shell 起動時に警告します）。
+ずれている場合は、下の「nix-misskey 自体を変更する場合」の手順で
+pin を更新してください。
 
 ```bash
-git clone --recursive https://github.com/misskey-dev/misskey.git misskey
-cd misskey
-git clone https://github.com/hitalin/nix-misskey .nix-misskey
+git clone https://github.com/misskey-dev/misskey.git && cd misskey
+echo 'use flake github:hitalin/nix-misskey' > .envrc && direnv allow
+nix-misskey dev
 ```
 
-direnv を使う場合:
+direnv を使わない場合は `nix develop github:hitalin/nix-misskey` で
+dev shell に入ります。
+
+環境を作り直すときは `nix-misskey clean`（DB と設定を削除）または
+`nix-misskey clean-all`（加えて `node_modules` も削除）の後、もう一度
+`nix-misskey dev` を実行します。
+
+自動 setup が走るのは、依存が未インストールか DB が未 migrate で、
+かつ `.config/default.yml` が nix-misskey の生成したままの場合だけです。
+設定を編集している場合や、pull 後に依存・migration が増えた場合は
+`nix-misskey setup` / `nix-misskey migrate` を実行してください。
+
+### nix-misskey 自体を変更する場合
+
+本リポジトリを `.nix-misskey` として併置し、ローカルの flake を使います
+（Node.js の pin 更新もこちらで行います）。
 
 ```bash
+git clone https://github.com/hitalin/nix-misskey .nix-misskey
 cp .nix-misskey/envrc.sample .envrc
 direnv allow
 ```
@@ -49,27 +72,11 @@ direnv allow
 を使い、評価済みの dev shell をキャッシュします（未インストールなら
 自動で取得）。2 回目以降のディレクトリ移動は即座に完了します。
 
-direnv を使わない場合:
+direnv を使わない場合は `nix develop ./.nix-misskey` です。
 
-```bash
-nix develop ./.nix-misskey
-```
-
-初回のみ依存関係をインストールし、backend をビルドして migrate:
-
-```bash
-nix-misskey setup
-```
-
-開発サーバーを起動。PostgreSQL / Redis / 設定ファイルが未初期化なら
-自動的に立ち上げます。
-
-```bash
-nix-misskey dev
-```
-
-2 回目以降は `nix develop` 後に `nix-misskey dev` の 1 コマンドで
-完結します。
+以前の `envrc.sample` をコピーした `.envrc` は、なくなったディレクトリを
+監視しようとして direnv がエラーを表示し、`modules/` の変更も反映
+されません。コピーし直してください。
 
 ## コマンド一覧
 
@@ -80,8 +87,8 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 
 | コマンド | 説明 |
 |---|---|
-| `dev` | サービスを ensure して `pnpm dev` |
-| `setup` | 依存インストール + backend build + migrate（初回） |
+| `dev` | サービスを ensure し、初回は `setup` してから `pnpm dev` |
+| `setup` | 依存インストール + backend build + migrate（初回は `dev` が自動実行） |
 | `build` | `pnpm build`（production） |
 | `migrate` | `pnpm migrate` |
 | `revert` | `pnpm revert`（直前のマイグレーションを巻き戻し） |
@@ -91,7 +98,7 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | コマンド | 説明 |
 |---|---|
 | `status` | PostgreSQL / Redis の稼働状況 |
-| `stop` | 両サービスを停止 |
+| `stop` | 全サービスを停止 |
 | `logs <db\|cache\|app\|all>` | ログを tail |
 
 **Cleanup**
@@ -145,6 +152,25 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | Redis | 6379 |
 | Meilisearch (test 実行中のみ) | 57712 |
 
+## 構成
+
+機能ごとに `modules/<name>/` へ分かれています。各モジュールが必要な
+パッケージ・環境変数・設定ファイル・シェルライブラリ・サブコマンドを
+宣言し、`cli.nix`（CLI とヘルプ）と `shell.nix`（dev shell）がそれを
+組み立てます。PostgreSQL / Redis / Misskey のポートや DB 名は各モジュールの
+`default.nix` で一度だけ定義し、設定ファイルと環境変数の両方に使います。
+
+| モジュール | 内容 |
+|---|---|
+| `core` | ログ出力などの共通ヘルパー |
+| `misskey` | Node.js / pnpm、`.config/default.yml`、`dev` `setup` `build` `migrate` `revert` |
+| `services` | 各サービスの hook から生成する `status` `stop` `logs` |
+| `cleanup` | `clean` `clean-all` `reset` |
+| `postgres` | PostgreSQL と `db:*` |
+| `redis` | Redis と `cache:*` |
+| `meilisearch` | テスト用 Meilisearch |
+| `test` | `.config/test.yml` と `test` `test:*` |
+
 ## Flake outputs
 
 | 出力 | 用途 |
@@ -153,7 +179,7 @@ Misskey 本家の `package.json#scripts` 命名に揃えています
 | `packages.{default,nix-misskey}` | `nix-misskey` CLI 単体 |
 | `packages.nodejs` | `pkgs/nodejs.json` で固定した Node.js |
 | `apps.default` | `nix run` で CLI を直接呼び出し |
-| `checks` | `nix flake check` で CLI をビルド（全サブコマンドに shellcheck） |
+| `checks` | `nix flake check` で CLI をビルド（全サブコマンドに shellcheck）し、PostgreSQL / Redis を実際に起動する smoke test を実行 |
 | `formatter` | `nix fmt` で `.nix` を整形 |
 
 例:
